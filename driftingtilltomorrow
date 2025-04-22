@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drift Car Game</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #444;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <script>
+    // Get canvas and set dimensions to full window
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Game variables
+    let keys = {};
+    const car = {
+      x: canvas.width / 2,
+      y: canvas.height * 0.8,
+      width: 50,
+      height: 100,
+      angle: 0,
+      speed: 0,
+      maxSpeed: 8,
+      acceleration: 0.2,
+      friction: 0.05,
+      turnSpeed: 0.04,
+      drifting: false,
+    };
+
+    // Listen for keyboard events
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+    });
+    window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    // Update function for game state
+    function update() {
+      // Accelerate with "ArrowUp" (or W)
+      if (keys["ArrowUp"] || keys["KeyW"]) {
+        car.speed += car.acceleration;
+      } 
+      // Brake/Reverse with "ArrowDown" (or S)
+      if (keys["ArrowDown"] || keys["KeyS"]) {
+        car.speed -= car.acceleration;
+      }
+      // Apply friction
+      if (car.speed > 0) {
+        car.speed -= car.friction;
+        if (car.speed < 0) car.speed = 0;
+      } else if (car.speed < 0) {
+        car.speed += car.friction;
+        if (car.speed > 0) car.speed = 0;
+      }
+      // Limit the speed
+      if (car.speed > car.maxSpeed) car.speed = car.maxSpeed;
+      if (car.speed < -car.maxSpeed/2) car.speed = -car.maxSpeed/2;
+
+      // Check for drift mode (Spacebar to drift)
+      car.drifting = keys["Space"];
+
+      // Turning: while moving, allow turning
+      if (car.speed !== 0) {
+        // When drifting, turn a bit sharper for the effect
+        let turnAmount = car.turnSpeed * (car.drifting ? 1.5 : 1);
+        if (keys["ArrowLeft"] || keys["KeyA"]) {
+          car.angle -= turnAmount * (car.speed / car.maxSpeed);
+        }
+        if (keys["ArrowRight"] || keys["KeyD"]) {
+          car.angle += turnAmount * (car.speed / car.maxSpeed);
+        }
+      }
+
+      // Update car position based on its speed and angle
+      car.x += Math.sin(car.angle) * car.speed;
+      car.y -= Math.cos(car.angle) * car.speed;
+    }
+
+    // Draw function to render game objects
+    function draw() {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw background (placeholder: dark gray)
+      ctx.fillStyle = "#333";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw car (placeholder: rectangle with rotation)
+      ctx.save();
+      ctx.translate(car.x, car.y);
+      ctx.rotate(car.angle);
+      ctx.fillStyle = car.drifting ? "#FF5733" : "#00BCD4"; // Color changes if drifting
+      ctx.fillRect(-car.width/2, -car.height/2, car.width, car.height);
+      ctx.restore();
+    }
+
+    // Main game loop
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Start the game
+    gameLoop();
+
+    // Adjust canvas on window resize
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
